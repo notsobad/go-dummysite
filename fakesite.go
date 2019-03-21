@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
 	"log"
@@ -10,6 +11,14 @@ import (
 	"strconv"
 	"time"
 )
+
+type dynamicResp struct {
+	Path      string `json:"path"`
+	Query     string `json:"query"`
+	URI       string `json:"uri"`
+	Body      string `json:"body"`
+	Arguments string `json:"arguments"`
+}
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "hi sss %s", r.URL.Path[1:])
@@ -48,6 +57,17 @@ func codeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func dynamicHandler(w http.ResponseWriter, r *http.Request) {
+	resp := &dynamicResp{
+		Path:      "shit",
+		Query:     "",
+		URI:       "",
+		Body:      "",
+		Arguments: "",
+	}
+	respJSON, _ := json.MarshalIndent(resp, "", "    ")
+	w.Header().Set("Content-Type", "text/html")
+
+	fmt.Fprintf(w, "hello :-)<pre>%s</pre><hr>%s", respJSON, "happen")
 }
 
 func main() {
