@@ -14,7 +14,16 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func staticHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "static sss %s", r.URL.Path)
+	vars := mux.Vars(r)
+	now := time.Now()
+	cacheTime := 95270
+
+	expired := now.Add(time.Second * time.Duration(cacheTime))
+
+	w.Header().Set("Last-Modified", now.Format(time.RFC1123))
+	w.Header().Set("Expires", expired.Format(time.RFC1123))
+	w.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d", cacheTime))
+	fmt.Fprintf(w, vars["filename"])
 }
 
 func codeHandler(w http.ResponseWriter, r *http.Request) {
@@ -33,8 +42,8 @@ func main() {
 
 	r := mux.NewRouter()
 	r.HandleFunc("/", handler)
-	r.HandleFunc("/static", staticHandler)
-	r.HandleFunc("/code/{code:[1-9]+}", codeHandler)
+	r.HandleFunc("/static/{filename:.*}", staticHandler)
+	r.HandleFunc("/code/{code:[1-5][0-9][0-9]}", codeHandler)
 
 	log.Fatal(http.ListenAndServe("127.0.0.1:8080", r))
 }
