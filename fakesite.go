@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
@@ -9,6 +11,7 @@ import (
 	"mime"
 	"net/http"
 	"net/http/httputil"
+	"os"
 	"path"
 	"strconv"
 	"time"
@@ -44,6 +47,13 @@ var urls = []string{
 	"/redirect/js?url=http://www.notsobad.vip",
 }
 
+func getNodeID() string {
+	hostname, _ := os.Hostname()
+	h := md5.New()
+	h.Write([]byte(hostname))
+	return hex.EncodeToString(h.Sum(nil))[:7]
+}
+
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	const tpl = `
         <h1>YNM3K Test site</h1>
@@ -67,7 +77,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		Headers string
 	}{
 		Urls:    urls,
-		NodeID:  "",
+		NodeID:  getNodeID(),
 		Headers: string(headers),
 	}
 
@@ -124,6 +134,14 @@ func dynamicHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "hello :-)<pre>%s</pre><hr>%s", respJSON, "happen")
 }
 
+func slowHandler(w http.ResponseWriter, r *http.Request) {
+	now := time.Now()
+	fmt.Fprintf(w, "Start at: %s<br/>", now.Format(time.RFC3339))
+	time.Sleep(10 * time.Second)
+	now = time.Now()
+	fmt.Fprintf(w, "End at: %s", now.Format(time.RFC3339))
+}
+
 func main() {
 
 	r := mux.NewRouter()
@@ -131,6 +149,7 @@ func main() {
 	r.HandleFunc("/static/{filename:.*}", staticHandler)
 	r.HandleFunc("/code/{code:[1-5][0-9][0-9]}", codeHandler)
 	r.HandleFunc("/dynamic/{filename:.*}", dynamicHandler)
+	r.HandleFunc("/slow/{[0-9]+}", slowHandler)
 
 	log.Fatal(http.ListenAndServe("127.0.0.1:8080", r))
 }
