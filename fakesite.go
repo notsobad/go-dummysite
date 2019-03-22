@@ -135,11 +135,30 @@ func dynamicHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func slowHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	sleepTime, _ := strconv.Atoi(vars["time"])
+
 	now := time.Now()
-	fmt.Fprintf(w, "Start at: %s<br/>", now.Format(time.RFC3339))
-	time.Sleep(10 * time.Second)
+	fmt.Fprintf(w, "Start at: %s\n", now.Format(time.RFC3339))
+	time.Sleep(time.Duration(sleepTime) * time.Second)
 	now = time.Now()
 	fmt.Fprintf(w, "End at: %s", now.Format(time.RFC3339))
+}
+
+func redirectHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	method := vars["method"]
+	url := r.FormValue("url")
+
+	switch method {
+	case "301", "302":
+		code, _ := strconv.Atoi(method)
+		http.Redirect(w, r, url, code)
+	case "js":
+		fmt.Fprintf(w, "<script>location.href=\"%s\";</script>", url)
+	case "meta":
+		fmt.Fprintf(w, "<meta http-equiv=\"refresh\" content=\"0; url=%s\" />", url)
+	}
 }
 
 func main() {
@@ -149,7 +168,8 @@ func main() {
 	r.HandleFunc("/static/{filename:.*}", staticHandler)
 	r.HandleFunc("/code/{code:[1-5][0-9][0-9]}", codeHandler)
 	r.HandleFunc("/dynamic/{filename:.*}", dynamicHandler)
-	r.HandleFunc("/slow/{[0-9]+}", slowHandler)
+	r.HandleFunc("/slow/{time:[0-9]+}", slowHandler)
+	r.HandleFunc("/redirect/{method}", redirectHandler)
 
 	log.Fatal(http.ListenAndServe("127.0.0.1:8080", r))
 }
