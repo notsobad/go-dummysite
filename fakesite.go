@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
+	"html/template"
 	"log"
 	"mime"
 	"net/http"
+	"net/http/httputil"
 	"path"
 	"strconv"
 	"time"
@@ -18,10 +20,59 @@ type dynamicResp struct {
 	URI       string `json:"uri"`
 	Body      string `json:"body"`
 	Arguments string `json:"arguments"`
+	Headers   string `json:"headers"`
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "hi sss %s", r.URL.Path[1:])
+var urls = []string{
+	"/static/abc.js",
+	"/static/abc/xyz.css",
+	"/static/abc/xyz/uvw.txt",
+	"/static/abc.html",
+	"/static/abc.jpg",
+	"/dynamic/abc.php",
+	"/dynamic/abc.asp",
+	"/code/200",
+	"/code/400",
+	"/code/404",
+	"/code/502",
+	"/size/11k.zip",
+	"/size/1k.bin",
+	"/slow/3",
+	"/slow/4-10",
+	"/redirect/301?url=http://www.notsobad.vip",
+	"/redirect/302?url=http://www.notsobad.vip",
+	"/redirect/js?url=http://www.notsobad.vip",
+}
+
+func indexHandler(w http.ResponseWriter, r *http.Request) {
+	const tpl = `
+        <h1>YNM3K Test site</h1>
+        <h2>Request header</h2>
+        <pre>{{.Headers}}
+        </pre>
+        <h2>Links</h2>
+		<ul>
+			{{range .Urls}}
+            <li><a href="{{.}}">{{.}}</a></li>
+            {{end}}
+        </ul>
+        <footer>
+            <hr/>SERVER-ID: {{.NodeID}}, Powered by YNM3K <a href="https://github.com/notsobad/ynm3k">Fork me</a> on Github
+        </footer>
+	`
+	headers, _ := httputil.DumpRequest(r, true)
+	data := struct {
+		Urls    []string
+		NodeID  string
+		Headers string
+	}{
+		Urls:    urls,
+		NodeID:  "",
+		Headers: string(headers),
+	}
+
+	t, _ := template.New("webpage").Parse(tpl)
+	_ = t.Execute(w, data)
 }
 
 func staticHandler(w http.ResponseWriter, r *http.Request) {
@@ -57,13 +108,16 @@ func codeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func dynamicHandler(w http.ResponseWriter, r *http.Request) {
+	headers, _ := httputil.DumpRequest(r, true)
+
 	resp := &dynamicResp{
-		Path:      "shit",
-		Query:     "",
-		URI:       "",
-		Body:      "",
-		Arguments: "",
+		Path:    r.URL.Path,
+		Query:   r.URL.RawQuery,
+		URI:     r.RequestURI,
+		Body:    "",
+		Headers: string(headers),
 	}
+
 	respJSON, _ := json.MarshalIndent(resp, "", "    ")
 	w.Header().Set("Content-Type", "text/html")
 
@@ -73,7 +127,7 @@ func dynamicHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 
 	r := mux.NewRouter()
-	r.HandleFunc("/", handler)
+	r.HandleFunc("/", indexHandler)
 	r.HandleFunc("/static/{filename:.*}", staticHandler)
 	r.HandleFunc("/code/{code:[1-5][0-9][0-9]}", codeHandler)
 	r.HandleFunc("/dynamic/{filename:.*}", dynamicHandler)
