@@ -14,6 +14,7 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -41,10 +42,10 @@ var urls = []string{
 	"/size/11k.zip",
 	"/size/1k.bin",
 	"/slow/3",
-	"/slow/4-10",
 	"/redirect/301?url=http://www.notsobad.vip",
 	"/redirect/302?url=http://www.notsobad.vip",
 	"/redirect/js?url=http://www.notsobad.vip",
+	"/redirect/meta?url=http://www.notsobad.vip",
 }
 
 func getNodeID() string {
@@ -161,6 +162,25 @@ func redirectHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func sizeHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	size, _ := strconv.Atoi(vars["size"])
+	switch vars["measure"] {
+	case "k":
+		size = size * 1024
+	case "m":
+		size = size * 1024 * 1024
+	}
+	//fmt.Fprintf(w, "size: %s, meas: %s, SIZE: %d", vars["size"], vars["measure"], size)
+
+	w.Header().Set("Content-Description", "File Transfer")
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Content-Transfer-Encoding", "binary")
+
+	fmt.Fprintf(w, strings.Repeat("f", size))
+}
+
 func main() {
 
 	r := mux.NewRouter()
@@ -170,6 +190,7 @@ func main() {
 	r.HandleFunc("/dynamic/{filename:.*}", dynamicHandler)
 	r.HandleFunc("/slow/{time:[0-9]+}", slowHandler)
 	r.HandleFunc("/redirect/{method}", redirectHandler)
+	r.HandleFunc("/size/{size:[0-9]+}{measure:[k|m]?}{[^/]*}", sizeHandler)
 
 	log.Fatal(http.ListenAndServe("127.0.0.1:8080", r))
 }
