@@ -2,12 +2,14 @@
 A Fakesite for http test, it's a go version of [ynm3k](https://github.com/notsobad/ynm3k).
 
     go install github.com/notsobad/go-fakesite
+    # run
+    go-fakesite
 
     # visit http://127.0.0.1:8080/
 
 
 
-# static file
+# Static file
 
 Visit same url, get same result
 
