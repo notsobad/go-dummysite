@@ -4,8 +4,8 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
+	"flag"
 	"fmt"
-	"github.com/gorilla/mux"
 	"html/template"
 	"log"
 	"mime"
@@ -16,6 +16,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
 )
 
 type dynamicResp struct {
@@ -173,15 +176,14 @@ func sizeHandler(w http.ResponseWriter, r *http.Request) {
 		size = size * 1024 * 1024
 	}
 	//fmt.Fprintf(w, "size: %s, meas: %s, SIZE: %d", vars["size"], vars["measure"], size)
-
-	w.Header().Set("Content-Description", "File Transfer")
-	w.Header().Set("Content-Type", "application/octet-stream")
-	w.Header().Set("Content-Transfer-Encoding", "binary")
-
-	fmt.Fprintf(w, strings.Repeat("f", size))
+	fmt.Fprintf(w, strings.Repeat("o", size))
 }
 
 func main() {
+
+	ip := flag.String("ip", "0.0.0.0", "IP to use, default 0.0.0.0")
+	port := flag.Int("port", 9527, "Port to use, default 9527")
+	flag.Parse()
 
 	r := mux.NewRouter()
 	r.HandleFunc("/", indexHandler)
@@ -190,7 +192,11 @@ func main() {
 	r.HandleFunc("/dynamic/{filename:.*}", dynamicHandler)
 	r.HandleFunc("/slow/{time:[0-9]+}", slowHandler)
 	r.HandleFunc("/redirect/{method}", redirectHandler)
-	r.HandleFunc("/size/{size:[0-9]+}{measure:[k|m]?}{[^/]*}", sizeHandler)
+	//r.HandleFunc("/size/{size:[0-9]+}{measure:[k|m]?}{[^/]*}", sizeHandler)
+	r.HandleFunc("/size/{size:[0-9]+}{measure:[k|m]?}", sizeHandler)
 
-	log.Fatal(http.ListenAndServe("127.0.0.1:8080", r))
+	loggedRouter := handlers.LoggingHandler(os.Stdout, r)
+	address := fmt.Sprintf("%s:%d", *ip, *port)
+	fmt.Println("Listen:", address)
+	log.Fatal(http.ListenAndServe(address, loggedRouter))
 }
