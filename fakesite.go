@@ -62,13 +62,12 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	const tpl = `
         <h1>YNM3K Test site</h1>
         <h2>Request header</h2>
-        <pre>{{.Headers}}
-        </pre>
+        <pre>{{.Headers}}</pre>
         <h2>Links</h2>
-		<ul>
-			{{range .Urls}}
-            <li><a href="{{.}}">{{.}}</a></li>
-            {{end}}
+	<ul>
+		{{range .Urls}}
+		<li><a href="{{.}}">{{.}}</a></li>
+		{{end}}
         </ul>
         <footer>
             <hr/>SERVER-ID: {{.NodeID}}, Powered by YNM3K <a href="https://github.com/notsobad/ynm3k">Fork me</a> on Github
@@ -106,7 +105,7 @@ func staticHandler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", contentType)
 	}
 
-	fmt.Fprintf(w, filename)
+	fmt.Fprint(w, filename)
 }
 
 func codeHandler(w http.ResponseWriter, r *http.Request) {
@@ -176,7 +175,7 @@ func sizeHandler(w http.ResponseWriter, r *http.Request) {
 		size = size * 1024 * 1024
 	}
 	//fmt.Fprintf(w, "size: %s, meas: %s, SIZE: %d", vars["size"], vars["measure"], size)
-	fmt.Fprintf(w, strings.Repeat("o", size))
+	fmt.Fprint(w, strings.Repeat("o", size))
 }
 
 func main() {
@@ -192,8 +191,7 @@ func main() {
 	r.HandleFunc("/dynamic/{filename:.*}", dynamicHandler)
 	r.HandleFunc("/slow/{time:[0-9]+}", slowHandler)
 	r.HandleFunc("/redirect/{method}", redirectHandler)
-	//r.HandleFunc("/size/{size:[0-9]+}{measure:[k|m]?}{[^/]*}", sizeHandler)
-	r.HandleFunc("/size/{size:[0-9]+}{measure:[k|m]?}", sizeHandler)
+	r.HandleFunc("/size/{size:[0-9]+}{measure:[k|m]?}{ext:.*}", sizeHandler)
 
 	loggedRouter := handlers.LoggingHandler(os.Stdout, r)
 	address := fmt.Sprintf("%s:%d", *ip, *port)
