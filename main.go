@@ -60,7 +60,7 @@ func getNodeID() string {
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	const tpl = `
-        <h1>YNM3K Test site</h1>
+        <h1>Go fake site</h1>
         <h2>Request header</h2>
         <pre>{{.Headers}}</pre>
         <h2>Links</h2>
@@ -70,7 +70,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		{{end}}
         </ul>
         <footer>
-            <hr/>SERVER-ID: {{.NodeID}}, Powered by YNM3K <a href="https://github.com/notsobad/ynm3k">Fork me</a> on Github
+            <hr/>SERVER-ID: {{.NodeID}}, Powered by go-fakesite<a href="https://github.com/notsobad/go-fakesite">Fork me</a> on Github
         </footer>
 	`
 	headers, _ := httputil.DumpRequest(r, true)
@@ -174,7 +174,6 @@ func sizeHandler(w http.ResponseWriter, r *http.Request) {
 	case "m":
 		size = size * 1024 * 1024
 	}
-	//fmt.Fprintf(w, "size: %s, meas: %s, SIZE: %d", vars["size"], vars["measure"], size)
 	fmt.Fprint(w, strings.Repeat("o", size))
 }
 
@@ -195,6 +194,6 @@ func main() {
 
 	loggedRouter := handlers.LoggingHandler(os.Stdout, r)
 	address := fmt.Sprintf("%s:%d", *ip, *port)
-	fmt.Println("Listen:", address)
+	fmt.Println("# Listening on", address)
 	log.Fatal(http.ListenAndServe(address, loggedRouter))
 }

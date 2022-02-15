@@ -5,8 +5,14 @@ A Fakesite for http test, it's a go version of [ynm3k](https://github.com/notsob
     # run
     go-fakesite
 
-    # visit http://localhost:9527/
- 
+    # curl http://localhost:9527/
+
+```
+$ go-fakesite
+# Listening on 0.0.0.0:9527
+127.0.0.1 - - [15/Feb/2022:08:27:04 +0000] "GET / HTTP/1.1" 200 1979
+127.0.0.1 - - [15/Feb/2022:08:27:10 +0000] "GET /size/1k HTTP/1.1" 200 1024
+```
 
 
 # Static file
