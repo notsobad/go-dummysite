@@ -177,12 +177,7 @@ func sizeHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, strings.Repeat("o", size))
 }
 
-func main() {
-
-	ip := flag.String("ip", "0.0.0.0", "IP to use, default 0.0.0.0")
-	port := flag.Int("port", 9527, "Port to use, default 9527")
-	flag.Parse()
-
+func appRouter() http.Handler {
 	r := mux.NewRouter()
 	r.HandleFunc("/", indexHandler)
 	r.HandleFunc("/static/{filename:.*}", staticHandler)
@@ -191,7 +186,15 @@ func main() {
 	r.HandleFunc("/slow/{time:[0-9]+}", slowHandler)
 	r.HandleFunc("/redirect/{method}", redirectHandler)
 	r.HandleFunc("/size/{size:[0-9]+}{measure:[k|m]?}{ext:.*}", sizeHandler)
+	return r
+}
+func main() {
 
+	ip := flag.String("ip", "0.0.0.0", "IP to use, default 0.0.0.0")
+	port := flag.Int("port", 9527, "Port to use, default 9527")
+	flag.Parse()
+
+	r := appRouter()
 	loggedRouter := handlers.LoggingHandler(os.Stdout, r)
 	address := fmt.Sprintf("%s:%d", *ip, *port)
 	fmt.Println("# Listening on", address)
