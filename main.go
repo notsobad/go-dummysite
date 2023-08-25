@@ -40,15 +40,16 @@ var urls = []string{
 	"/dynamic/abc.asp",
 	"/code/200",
 	"/code/400",
+	"/code/403",
 	"/code/404",
 	"/code/502",
 	"/size/11k.zip",
 	"/size/1k.bin",
 	"/slow/3",
-	"/redirect/301?url=http://www.notsobad.vip",
-	"/redirect/302?url=http://www.notsobad.vip",
-	"/redirect/js?url=http://www.notsobad.vip",
-	"/redirect/meta?url=http://www.notsobad.vip",
+	"/redirect/301?url=http://www.notsobad.work",
+	"/redirect/302?url=http://www.notsobad.work",
+	"/redirect/js?url=http://www.notsobad.work",
+	"/redirect/meta?url=http://www.notsobad.work",
 }
 
 func getNodeID() string {
@@ -64,13 +65,13 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
         <h2>Request header</h2>
         <pre>{{.Headers}}</pre>
         <h2>Links</h2>
-	<ul>
+		<ul>
 		{{range .Urls}}
 		<li><a href="{{.}}">{{.}}</a></li>
 		{{end}}
         </ul>
         <footer>
-            <hr/>SERVER-ID: {{.NodeID}}, Powered by go-fakesite<a href="https://github.com/notsobad/go-fakesite">Fork me</a> on Github
+        	<hr/>Server id: {{.NodeID}}, Powered by go-fakesite, <a href="https://github.com/notsobad/go-fakesite">Fork me</a> on Github
         </footer>
 	`
 	headers, _ := httputil.DumpRequest(r, true)
@@ -134,7 +135,7 @@ func dynamicHandler(w http.ResponseWriter, r *http.Request) {
 	respJSON, _ := json.MarshalIndent(resp, "", "    ")
 	w.Header().Set("Content-Type", "text/html")
 
-	fmt.Fprintf(w, "hello :-)<pre>%s</pre><hr>%s", respJSON, "happen")
+	fmt.Fprintf(w, "hello :-)<pre>%s</pre><hr>", respJSON)
 }
 
 func slowHandler(w http.ResponseWriter, r *http.Request) {
@@ -143,8 +144,8 @@ func slowHandler(w http.ResponseWriter, r *http.Request) {
 
 	now := time.Now()
 	fmt.Fprintf(w, "Start at: %s\n", now.Format(time.RFC3339))
-	time.Sleep(time.Duration(sleepTime) * time.Second)
-	now = time.Now()
+	ticker := time.NewTicker(time.Duration(sleepTime) * time.Second).C
+	now = <-ticker
 	fmt.Fprintf(w, "End at: %s", now.Format(time.RFC3339))
 }
 
@@ -188,6 +189,7 @@ func appRouter() http.Handler {
 	r.HandleFunc("/size/{size:[0-9]+}{measure:[k|m]?}{ext:.*}", sizeHandler)
 	return r
 }
+
 func main() {
 
 	ip := flag.String("ip", "0.0.0.0", "IP to use, default 0.0.0.0")
