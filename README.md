@@ -1,71 +1,97 @@
-# go-fakesite
-A Fakesite for http test, it's a go version of [ynm3k](https://github.com/notsobad/ynm3k).
+# :globe_with_meridians: Go-Fakesite
 
-    go install github.com/notsobad/go-fakesite
-    # run
-    go-fakesite
+Go-Fakesite is a mock website generator for HTTP testing. It is a Go version of [ynm3k](https://github.com/notsobad/ynm3k). This tool is designed to simulate various URL addresses, static and dynamic web pages, different status codes, response sizes, and more. It is particularly useful for testing CDN and WAF systems.
 
-    # curl http://localhost:9527/
+## :wrench: Installation
 
-```
-$ go-fakesite
-# Listening on 0.0.0.0:9527
-127.0.0.1 - - [15/Feb/2022:08:27:04 +0000] "GET / HTTP/1.1" 200 1979
-127.0.0.1 - - [15/Feb/2022:08:27:10 +0000] "GET /size/1k HTTP/1.1" 200 1024
+To install Go-Fakesite, use the following command:
+
+```bash
+go install github.com/notsobad/go-fakesite
 ```
 
+## :computer: Usage
 
-# Static file
+To run Go-Fakesite, use the following command:
 
-Visit same url, get same result
+```bash
+go-fakesite
+```
 
-/static/$RANDOM.$EXT
+You can then access the site at `http://localhost:9527/`.
+
+## :star2: Features
+
+### :file_folder: Static Files
+
+Visiting the same URL will yield the same result. Use the following format:
+
+`/static/$RANDOM.$EXT`
+
+Examples:
 
 * http://localhost:9527/static/abc.zip
 * http://localhost:9527/static/xyz.html
 * http://localhost:9527/static/1234.js
 
-## Dynamic url
+### :cyclone: Dynamic URLs
 
-Visit same url, get different result
+Visiting the same URL will yield different results. Use the following format:
 
-/dynamic/$RANDOM.$EXT
+`/dynamic/$RANDOM.$EXT`
+
+Examples:
 
 * http://localhost:9527/dynamic/abc.php
 * http://localhost:9527/dynamic/abc.jsp
 
-## HTTP status code
-/code/$CODE.$EXT
+### :warning: HTTP Status Codes
+
+You can simulate different HTTP status codes. Use the following format:
+
+`/code/$CODE.$EXT`
+
+Examples:
 
 * http://localhost:9527/code/500.php
 * http://localhost:9527/code/404.asp
 
-## Specified size response
-You can output a file of the specified size.
+### :chart_with_upwards_trend: Specified Size Response
 
-/size/$SIZE.$EXT
+You can output a file of a specified size. Use the following format:
+
+`/size/$SIZE.$EXT`
+
+Examples:
 
 * http://localhost:9527/size/11k.zip
 * http://localhost:9527/size/1m.bin
 * http://localhost:9527/size/1024.rar
 
-## A server with a slow response
+### :snail: Slow Response Server
 
-Visit `/slow/$SECONDS`, the url will take $SECONDS time to render.
+You can simulate a slow server response. Visit `/slow/$SECONDS` and the URL will take $SECONDS time to render.
+
+Examples:
 
 * http://localhost:9527/slow/3
 * http://localhost:9527/slow/4-10
 
+### :arrows_counterclockwise: URL Redirect
 
-## URL redirect
-All kinds of url redirect method
+You can simulate various URL redirect methods. Use the following format:
 
-* http://localhost:9527/redirect/301?url=http://www.notsobad.vip  301
-* http://localhost:9527/redirect/302?url=http://www.notsobad.vip  302
-* http://localhost:9527/redirect/js?url=http://www.notsobad.vip javascript
-* http://localhost:9527/redirect/meta?url=http://www.notsobad.vip html meta
+`http://localhost:9527/redirect/$CODE?url=$URL`
 
-DEMO:
+Normal redirect:
 
-    curl -v 'localhost:9527/redirect/301?url=file:///etc/passwd'
-    curl -v 'localhost:9527/redirect/302?url=http://www.jiasule.com'
+* http://localhost:9527/redirect/301?url=http://www.notsobad.vip
+* http://localhost:9527/redirect/302?url=http://www.notsobad.vip
+* http://localhost:9527/redirect/js?url=http://www.notsobad.vip
+* http://localhost:9527/redirect/meta?url=http://www.notsobad.vip
+
+You can also redirect to a 'file://' protol address:
+
+```bash
+curl -v 'localhost:9527/redirect/301?url=file:///etc/passwd'
+```
