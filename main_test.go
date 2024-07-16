@@ -1,12 +1,15 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/gorilla/mux"
 )
 
 func TestIndexHandler(t *testing.T) {
@@ -21,7 +24,7 @@ func TestIndexHandler(t *testing.T) {
 	if w.Code != http.StatusOK {
 		t.Errorf("Got HTTP status code %d, expect 200", w.Code)
 	}
-	if !strings.Contains(w.Body.String(), "SERVER-ID") {
+	if !strings.Contains(w.Body.String(), "Server id:") {
 		t.Errorf("Got HTTP status code %d, expect 200", w.Code)
 	}
 }
@@ -132,5 +135,57 @@ func TestSlowHandler(t *testing.T) {
 			t.Errorf("Got HTTP status code %d, expect %d", w.Code, 200)
 		}
 
+	}
+}
+
+// generate test for chunkHandler
+func TestChunkHandler(t *testing.T) {
+	// 创建一个路由，模拟实际的路由行为
+	r := mux.NewRouter()
+	r.HandleFunc("/chunk/{count}", chunkHandler)
+
+	// 创建一个测试服务器
+	server := httptest.NewServer(r)
+	defer server.Close()
+
+	expectedCount := 5
+	url := fmt.Sprintf("%s/chunk/%d", server.URL, expectedCount)
+	// 发送请求到测试服务器
+	resp, err := http.Get(url)
+	if err != nil {
+		t.Fatalf("Failed to send request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	// 检查Transfer-Encoding是否为chunked
+	if resp.TransferEncoding == nil || resp.TransferEncoding[0] != "chunked" {
+		t.Errorf("Expected chunked transfer encoding, got %v", resp.TransferEncoding)
+	}
+
+	// 读取响应体，确保它是分多次接收的
+	scanner := bufio.NewScanner(resp.Body)
+	lineCount := 0
+
+	last_time := time.Now()
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.Contains(line, "Time:") && strings.Contains(line, "Msg:") {
+			lineCount++
+			// 检查每个分块之间的时间间隔是否大于1秒
+			if lineCount > 1 {
+				current_time := time.Now()
+				if current_time.Sub(last_time) < 1*time.Second {
+					t.Errorf("Chunk interval is less than 1 second")
+				}
+			}
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		t.Fatalf("Error reading stream: %v", err)
+	}
+	// 确保我们接收到了预期数量的分块
+	if lineCount != expectedCount {
+		t.Errorf("Expected %d chunks, got %d", expectedCount, lineCount)
 	}
 }

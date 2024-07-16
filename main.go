@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"html/template"
 	"log"
+	"math/rand"
 	"mime"
 	"net/http"
 	"net/http/httputil"
@@ -178,6 +179,36 @@ func sizeHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, strings.Repeat("o", size))
 }
 
+func chunkHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	count, _ := strconv.Atoi(vars["count"])
+
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Transfer-Encoding", "chunked")
+
+	//time.Sleep(time.Duration(count) * time.Second)
+	for i := 0; i < count; i++ {
+		randomStr := randomString(10)
+		currentTime := time.Now().Format(time.RFC3339)
+		fmt.Fprintf(w, "Time: %s, Msg: %s\n", currentTime, randomStr)
+		if f, ok := w.(http.Flusher); ok {
+			f.Flush()
+		}
+		time.Sleep(1 * time.Second)
+	}
+}
+
+func randomString(n int) string {
+	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+	s := make([]rune, n)
+	for i := range s {
+		s[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(s)
+}
+
 func appRouter() http.Handler {
 	r := mux.NewRouter()
 	r.HandleFunc("/", indexHandler)
@@ -187,6 +218,7 @@ func appRouter() http.Handler {
 	r.HandleFunc("/slow/{time:[0-9]+}", slowHandler)
 	r.HandleFunc("/redirect/{method}", redirectHandler)
 	r.HandleFunc("/size/{size:[0-9]+}{measure:[k|m]?}{ext:.*}", sizeHandler)
+	r.HandleFunc("/chunk/{count:[0-9]+}", chunkHandler)
 	return r
 }
 

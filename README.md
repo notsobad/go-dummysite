@@ -95,3 +95,13 @@ You can also redirect to a 'file://' protol address:
 ```bash
 curl -v 'localhost:9527/redirect/301?url=file:///etc/passwd'
 ```
+### :arrows_counterclockwise: Chunked http response
+
+You can simulate chunked http response. Use the following format, `$COUNT` is the count of chunked message. 
+
+`http://localhost:9527/chunk/$COUNT`
+
+Examples:
+
+* http://localhost:9527/chunk/3
+* http://localhost:9527/chunk/999
