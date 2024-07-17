@@ -1,12 +1,12 @@
 package main
 
 import (
-	"crypto/md5"
-	"encoding/hex"
+	"embed"
 	"encoding/json"
 	"flag"
 	"fmt"
-	"html/template"
+	"io"
+	"io/fs"
 	"log"
 	"math/rand"
 	"mime"
@@ -20,7 +20,11 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/russross/blackfriday/v2"
 )
+
+//go:embed README.md
+var readmeFS embed.FS
 
 type dynamicResp struct {
 	Path      string `json:"path"`
@@ -31,63 +35,14 @@ type dynamicResp struct {
 	Headers   string `json:"headers"`
 }
 
-var urls = []string{
-	"/static/abc.js",
-	"/static/abc/xyz.css",
-	"/static/abc/xyz/uvw.txt",
-	"/static/abc.html",
-	"/static/abc.jpg",
-	"/dynamic/abc.php",
-	"/dynamic/abc.asp",
-	"/code/200",
-	"/code/400",
-	"/code/403",
-	"/code/404",
-	"/code/502",
-	"/size/11k.zip",
-	"/size/1k.bin",
-	"/slow/3",
-	"/redirect/301?url=http://www.notsobad.work",
-	"/redirect/302?url=http://www.notsobad.work",
-	"/redirect/js?url=http://www.notsobad.work",
-	"/redirect/meta?url=http://www.notsobad.work",
-}
+func randomString(n int) string {
+	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
-func getNodeID() string {
-	hostname, _ := os.Hostname()
-	h := md5.New()
-	h.Write([]byte(hostname))
-	return hex.EncodeToString(h.Sum(nil))[:7]
-}
-
-func indexHandler(w http.ResponseWriter, r *http.Request) {
-	const tpl = `
-        <h1>Go fake site</h1>
-        <h2>Request header</h2>
-        <pre>{{.Headers}}</pre>
-        <h2>Links</h2>
-		<ul>
-		{{range .Urls}}
-		<li><a href="{{.}}">{{.}}</a></li>
-		{{end}}
-        </ul>
-        <footer>
-        	<hr/>Server id: {{.NodeID}}, Powered by go-fakesite, <a href="https://github.com/notsobad/go-fakesite">Fork me</a> on Github
-        </footer>
-	`
-	headers, _ := httputil.DumpRequest(r, true)
-	data := struct {
-		Urls    []string
-		NodeID  string
-		Headers string
-	}{
-		Urls:    urls,
-		NodeID:  getNodeID(),
-		Headers: string(headers),
+	s := make([]rune, n)
+	for i := range s {
+		s[i] = letters[rand.Intn(len(letters))]
 	}
-
-	t, _ := template.New("webpage").Parse(tpl)
-	_ = t.Execute(w, data)
+	return string(s)
 }
 
 func staticHandler(w http.ResponseWriter, r *http.Request) {
@@ -199,14 +154,36 @@ func chunkHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func randomString(n int) string {
-	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+func traceHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "%s %s\r\n", r.Method, r.URL)
 
-	s := make([]rune, n)
-	for i := range s {
-		s[i] = letters[rand.Intn(len(letters))]
+	for name, values := range r.Header {
+		for _, value := range values {
+			fmt.Fprintf(w, "%v: %v\r\n", name, value)
+		}
 	}
-	return string(s)
+	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 1048576))
+	if err != nil {
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintf(w, "\r\n%s", string(body))
+}
+
+func indexHandler(w http.ResponseWriter, r *http.Request) {
+	//content, err := os.ReadFile("README.md")
+	content, err := fs.ReadFile(readmeFS, "README.md")
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	html := blackfriday.Run(content)
+
+	w.Header().Set("Content-Type", "text/html")
+
+	w.Write(html)
 }
 
 func appRouter() http.Handler {
@@ -219,6 +196,7 @@ func appRouter() http.Handler {
 	r.HandleFunc("/redirect/{method}", redirectHandler)
 	r.HandleFunc("/size/{size:[0-9]+}{measure:[k|m]?}{ext:.*}", sizeHandler)
 	r.HandleFunc("/chunk/{count:[0-9]+}", chunkHandler)
+	r.HandleFunc("/trace", traceHandler)
 	return r
 }
 
