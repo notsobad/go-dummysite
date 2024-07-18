@@ -155,7 +155,7 @@ func chunkHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func traceHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "%s %s\r\n", r.Method, r.URL)
+	fmt.Fprintf(w, "%s %s %s\r\n", r.Method, r.URL, r.Proto)
 
 	for name, values := range r.Header {
 		for _, value := range values {
