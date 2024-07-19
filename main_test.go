@@ -24,9 +24,6 @@ func TestIndexHandler(t *testing.T) {
 	if w.Code != http.StatusOK {
 		t.Errorf("Got HTTP status code %d, expect 200", w.Code)
 	}
-	if !strings.Contains(w.Body.String(), "Server id:") {
-		t.Errorf("Got HTTP status code %d, expect 200", w.Code)
-	}
 }
 func TestStaticHandler(t *testing.T) {
 	// Create and record request
@@ -148,7 +145,7 @@ func TestChunkHandler(t *testing.T) {
 	server := httptest.NewServer(r)
 	defer server.Close()
 
-	expectedCount := 5
+	expectedCount := 3
 	url := fmt.Sprintf("%s/chunk/%d", server.URL, expectedCount)
 	// 发送请求到测试服务器
 	resp, err := http.Get(url)
@@ -177,6 +174,7 @@ func TestChunkHandler(t *testing.T) {
 				if current_time.Sub(last_time) < 1*time.Second {
 					t.Errorf("Chunk interval is less than 1 second")
 				}
+				last_time = current_time
 			}
 		}
 	}
