@@ -1,21 +1,21 @@
-# Go-Fakesite
+# Go-Dummy-Site
 
-Go-Fakesite is a mock website generator for HTTP testing. It is a Go version of [ynm3k](https://github.com/notsobad/ynm3k). This tool is designed to simulate various URL addresses, static and dynamic web pages, different status codes, response sizes, and more. It is particularly useful for testing CDN and WAF systems.
+Go-Dummy-Site is a mock website generator for HTTP testing. It is a Go version of [ynm3k](https://github.com/notsobad/ynm3k). This tool is designed to simulate various URL addresses, static and dynamic web pages, different status codes, response sizes, and more. It is particularly useful for testing CDN and WAF systems.
 
 ## Installation
 
-To install Go-Fakesite, use the following command:
+To install Go-Dummy-Site, use the following command:
 
 ```bash
-go install github.com/notsobad/go-fakesite
+go install github.com/notsobad/go-dummysite
 ```
 
 ## Usage
 
-To run Go-Fakesite, use the following command:
+To run Go-Dummy-Site, use the following command:
 
 ```bash
-go-fakesite
+go-dummysite
 ```
 
 You can then access the site at [http://localhost:9527/](http://localhost:9527/).

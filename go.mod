@@ -1,4 +1,4 @@
-module github.com/notsobad/go-fakesite
+module github.com/notsobad/go-dummysite
 
 go 1.21
 
