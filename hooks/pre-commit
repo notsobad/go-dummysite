@@ -1,0 +1,12 @@
+#!/bin/sh
+
+echo ">> Running go test..."
+go test ./... -v
+
+if [ $? -ne 0 ]; then
+  echo "Test failed!"
+  exit 1
+fi
+
+echo "Test passed!"
+exit 0
