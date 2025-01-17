@@ -111,6 +111,10 @@ Examples:
 * [/chunk/10](/chunk/10)
 * [/chunk/999](/chunk/999)
 
+### SSE
+
+`http://localhost:9527/sse`
+
 ### HTTP Trace
 You can view raw http request and request body in the `/trace` api.
 

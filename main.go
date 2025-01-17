@@ -198,6 +198,7 @@ func sseHandler(w http.ResponseWriter, r *http.Request) {
 
 		randomStr := randomSentence(10)
 		currentTime := time.Now().Format(time.RFC3339)
+		fmt.Fprintf(w, "id: %d\n", i)
 		fmt.Fprintf(w, "data: {\"time\": \"%s\", \"msg\": \"%s\"}\n\n", currentTime, randomStr)
 		if f, ok := w.(http.Flusher); ok {
 			f.Flush()
