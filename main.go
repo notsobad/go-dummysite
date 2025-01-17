@@ -35,6 +35,21 @@ type dynamicResp struct {
 	Headers   string `json:"headers"`
 }
 
+var words = []string{
+	"the", "quick", "brown", "fox", "jumps", "over", "lazy", "dog",
+	"lorem", "ipsum", "dolor", "sit", "amet", "consectetur", "adipiscing", "elit",
+	"sed", "do", "eiusmod", "tempor", "incididunt", "ut", "labore", "et", "dolore", "magna", "aliqua",
+}
+
+func randomSentence(wordCount int) string {
+	var sentence []string
+	for i := 0; i < wordCount; i++ {
+		word := words[rand.Intn(len(words))]
+		sentence = append(sentence, word)
+	}
+	return strings.Join(sentence, " ")
+}
+
 func randomString(n int) string {
 	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
@@ -171,6 +186,27 @@ func traceHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "\r\n%s", string(body))
 }
 
+// SSE handler, send llm style json response of random data random time
+func sseHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+
+	i := 0
+	for i < 100 {
+		// generate random words with meaingless data
+
+		randomStr := randomSentence(10)
+		currentTime := time.Now().Format(time.RFC3339)
+		fmt.Fprintf(w, "data: {\"time\": \"%s\", \"msg\": \"%s\"}\n\n", currentTime, randomStr)
+		if f, ok := w.(http.Flusher); ok {
+			f.Flush()
+		}
+		time.Sleep(time.Duration(rand.Intn(2)) * time.Second)
+		i++
+	}
+}
+
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	//content, err := os.ReadFile("README.md")
 	content, err := fs.ReadFile(readmeFS, "README.md")
@@ -196,6 +232,7 @@ func appRouter() http.Handler {
 	r.HandleFunc("/redirect/{method}", redirectHandler)
 	r.HandleFunc("/size/{size:[0-9]+}{measure:[k|m]?}{ext:.*}", sizeHandler)
 	r.HandleFunc("/chunk/{count:[0-9]+}", chunkHandler)
+	r.HandleFunc("/sse", sseHandler)
 	r.HandleFunc("/trace", traceHandler)
 	return r
 }
